@@ -2086,7 +2086,7 @@
 	  (cons preedit-underline
 		(apply string-append (ustr-former-seq word))))
      (and (not (string=? composing ""))
-	  (cons preedit-reverse composing))
+	  (cons (bitwise-ior preedit-reverse preedit-underline) composing))
      (and (byeoru-has-preedit? bc)
 	  (cons preedit-cursor ""))
      (and (not (ustr-cursor-at-end? word))
