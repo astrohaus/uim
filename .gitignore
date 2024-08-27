@@ -225,6 +225,38 @@
 /gtk3/toolbar/uim-toolbar-gtk3-systray
 /gtk3/toolbar/*.o
 
+# /gtk4/
+/gtk4/Makefile
+/gtk4/Makefile.in
+
+# /gtk4/candwin/
+/gtk4/candwin/.deps/
+/gtk4/candwin/.libs/
+/gtk4/candwin/Makefile
+/gtk4/candwin/Makefile.in
+/gtk4/candwin/uim-candwin-gtk4
+/gtk4/candwin/uim-candwin-horizontal-gtk4
+/gtk4/candwin/uim-candwin-tbl-gtk4
+/gtk4/candwin/*.o
+
+# /gtk4/immodule/
+/gtk4/immodule/.deps/
+/gtk4/immodule/.libs/
+/gtk4/immodule/Makefile
+/gtk4/immodule/Makefile.in
+/gtk4/immodule/gtk4-rc-get-immodule-file
+/gtk4/immodule/im-uim.la
+/gtk4/immodule/*.lo
+/gtk4/immodule/*.o
+
+# /gtk4/switcher/
+/gtk4/switcher/.deps/
+/gtk4/switcher/.libs/
+/gtk4/switcher/Makefile
+/gtk4/switcher/Makefile.in
+/gtk4/switcher/uim-im-switcher-gtk4
+/gtk4/switcher/*.o
+
 # /m4/
 /m4/Makefile.in
 /m4/Makefile

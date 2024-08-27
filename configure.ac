@@ -123,7 +123,7 @@ fi
 if test "x$with_anthy" = xyes; then
   ANTHY_LIBS="-lanthy -lanthydic"
   ANTHY_CFLAGS=""
-  PKG_CHECK_EXISTS(anthy >= 8622,
+  PKG_CHECK_EXISTS(anthy >= 0.3,
                    [AC_DEFINE(LIBANTHY_UTF8_CAPABLE, 1,
                     "libanthy can handle UTF-8")])
 fi
@@ -141,7 +141,7 @@ AC_ARG_WITH(anthy-utf8,
   [with_anthy_utf8=no])
 
 if test "x$with_anthy_utf8" != xno; then
-  PKG_CHECK_MODULES(ANTHY_UTF8, anthy >= 8622,
+  PKG_CHECK_MODULES(ANTHY_UTF8, anthy >= 0.3,
                     [with_anthy_utf8=yes
                      AC_DEFINE(LIBANTHY_UTF8_CAPABLE, 1,
                      [libanthy can handle UTF-8])],
@@ -891,6 +891,29 @@ if test "x$enable_gnome3_applet" = xyes; then
     LIBPANEL_APPLET_DIR=`$PKG_CONFIG --variable=libpanel_applet_dir libpanel-applet`
   fi
   AC_SUBST(LIBPANEL_APPLET_DIR)
+fi
+
+dnl *******************************
+dnl *** Check for GTK+4 Library ***
+dnl *******************************
+AC_ARG_WITH(gtk4,
+  AC_HELP_STRING([--without-gtk4],
+    [do not build GTK+4 immodule]),
+  [],
+  [with_gtk4=yes])
+
+if test "x$with_gtk4" != xno; then
+  PKG_CHECK_MODULES(GTK4, gtk4, with_gtk4=yes, with_gtk4=no)
+fi
+
+AM_CONDITIONAL(GTK4, test "x$with_gtk4" = xyes)
+
+if test "x$with_gtk4" = xyes; then
+  AC_DEFINE(USE_GTK4, 1, [use GTK+4])
+  GTK4_BINARY_VERSION=`$PKG_CONFIG gtk4 --variable=gtk_binary_version`
+  GTK4_LIBDIR=`$PKG_CONFIG gtk4 --variable=libdir`
+  AC_SUBST(GTK4_BINARY_VERSION)
+  AC_SUBST(GTK4_LIBDIR)
 fi
 
 AC_ARG_ENABLE(debug,
@@ -1823,6 +1846,8 @@ AC_CONFIG_FILES([Makefile
                  gtk3/switcher/Makefile
                  gtk3/test/Makefile
                  gtk3/toolbar/Makefile
+                 gtk4/Makefile
+                 gtk4/immodule/Makefile
                  qt3/Makefile
                  qt3/candwin/Makefile
                  qt3/chardict/Makefile
@@ -1875,8 +1900,6 @@ AC_CONFIG_FILES([Makefile
                  test2/run-singletest.sh
                  examples/Makefile
                  examples/uim-custom/Makefile
-                 pixmaps/Makefile
-                 pixmaps/uim-m17nlib-relink-icons
                  replace/Makefile
                  notify/Makefile
                  uim.pc
@@ -2009,6 +2032,7 @@ Configure Result :
    GTK+2           : ${with_gtk2}
    GNOME2 Applet   : ${enable_gnome_applet}
    GTK+3           : ${with_gtk3}
+   GTK+4           : ${with_gtk4}
    GNOME3 Applet   : ${enable_gnome3_applet}
    Qt3             : ${with_qt}
    Qt3 immodule    : ${with_qt_immodule}
