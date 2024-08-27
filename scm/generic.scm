@@ -138,7 +138,7 @@
 	       (n (generic-context-rk-nth pc)))
 	  (im-clear-preedit pc)
 	  (im-pushback-preedit
-	   pc preedit-reverse
+	   pc (bitwise-ior preedit-reverse preedit-underline)
 	   (if (and
                  (not (null? cands))
                  (> n -1))
