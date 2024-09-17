@@ -271,6 +271,11 @@ static gboolean _uim_im_uim_helper_read_cb(
 
         g_print("Switching to IM: %s\n", im_name);
         uim_switch_im(uim_context, im_name);
+        uim_prop_update_custom(
+          uim_context,
+          "custom-preserved-default-im-name",
+          im_name
+        );
         uim_prop_list_update(uim_context);
       }
 
