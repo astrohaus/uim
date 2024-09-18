@@ -248,6 +248,7 @@ static void _uim_im_uim_helper_disconnect_cb(void)
   g_print("_uim_im_uim_helper_disconnect_cb\n");
 
   g_source_remove(_uim_im_uim_read_tag);
+  _uim_im_uim_read_tag = 0;
   _uim_im_uim_fd = -1;
 }
 
@@ -289,12 +290,29 @@ static void
 uim_im_context_dispose(GObject *object)
 {
   g_print("uim_im_context_dispose\n");
+
+  UIMIMContext *uic = UIM_IM_CONTEXT(object);
+
+  if (uic->slave) {
+    g_signal_handlers_disconnect_by_func(
+      uic->slave,
+      (gpointer)(uintptr_t)_uim_im_slave_im_context_commit_callback,
+      uic);
+    g_object_unref(uic->slave);
+    uic->slave = NULL;
+  }
+  if (uic->uim_context) {
+    uim_release_context(uic->uim_context);
+    uic->uim_context = NULL;
+  }
+  G_OBJECT_CLASS(uim_im_context_parent_class)->dispose(object);
 }
 
 static void
 uim_im_context_finalize(GObject *object)
 {
   g_print("uim_im_context_finalize\n");
+  G_OBJECT_CLASS(uim_im_context_parent_class)->finalize(object);
 }
 
 static gboolean
@@ -388,4 +406,16 @@ void
 g_io_module_unload(GIOModule *module)
 {
   g_print("g_io_module_unload\n");
+
+  if (_uim_im_uim_read_tag != 0) {
+    g_source_remove(_uim_im_uim_read_tag);
+    _uim_im_uim_read_tag = 0;
+  }
+  if (_uim_im_uim_fd != -1) {
+    uim_helper_close_client_fd(_uim_im_uim_fd);
+    _uim_im_uim_fd = -1;
+  }
+
+  uim_counted_quit();
+  g_type_module_unuse(G_TYPE_MODULE(module));
 }
