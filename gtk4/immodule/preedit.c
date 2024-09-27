@@ -6,8 +6,6 @@
 
 #include "preedit.h"
 
-#define DEFAULT_SEPARATOR_STR "|"
-
 void
 preedit_init(preedit *preedit) {
   preedit->segments_count = 0;
