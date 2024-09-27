@@ -16,7 +16,7 @@
 #include "candidates_panel.h"
 #include "preedit.h"
 
-#define UIM_IM_CONTEXT(obj) (G_TYPE_CHECK_INSTANCE_CAST((obj),type_im_uim,UIMIMContext))
+#define UIM_IM_CONTEXT(obj) (G_TYPE_CHECK_INSTANCE_CAST((obj),uim_im_context_get_type(),UIMIMContext))
 
 G_DEFINE_DYNAMIC_TYPE(UIMIMContext, uim_im_context, GTK_TYPE_IM_CONTEXT)
 
