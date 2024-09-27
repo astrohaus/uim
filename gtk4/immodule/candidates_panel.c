@@ -105,9 +105,9 @@ candidates_panel_deactivate(candidates_panel *panel)
 
 static void _show_current_page(candidates_panel *panel, uim_context uim_context)
 {
-  g_return_if_fail(panel->client != NULL);
-  g_return_if_fail(uim_context != NULL);
-  g_return_if_fail(panel->signal_candidate_selector_show != 0);
+  if (panel->client == NULL) return;
+  if (uim_context == NULL) return;
+  if (panel->signal_candidate_selector_show == 0) return;
 
   uint start_index = panel->current_page * panel->candidates_per_page;
   uint end_index = start_index + panel->candidates_per_page;
