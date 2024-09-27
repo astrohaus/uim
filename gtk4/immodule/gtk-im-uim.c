@@ -14,6 +14,7 @@
 #include "gtk-im-uim.h"
 #include "keyutil.h"
 #include "candidates_panel.h"
+#include "preedit.h"
 
 #define UIM_IM_CONTEXT(obj) (G_TYPE_CHECK_INSTANCE_CAST((obj),type_im_uim,UIMIMContext))
 
