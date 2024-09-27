@@ -54,11 +54,6 @@ static gboolean _uim_im_uim_helper_read_cb(
   GIOCondition condition,
   gpointer data);
 
-static guint _signal_candidate_selector_activate;
-static guint _signal_candidate_selector_select;
-static guint _signal_candidate_selector_shift_page;
-static guint _signal_candidate_selector_deactivate;
-
 
 static void
 uim_im_context_class_init(UIMIMContextClass *class)
