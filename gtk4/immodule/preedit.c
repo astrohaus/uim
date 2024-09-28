@@ -18,7 +18,9 @@ preedit_clear(preedit *preedit) {
   for (int i = 0; i < preedit->segments_count; i++) {
     g_free(preedit->segments[i].str);
   }
-  free(preedit->segments);
+  if (preedit->segments) {
+    free(preedit->segments);
+  }
   preedit->segments = NULL;
   preedit->segments_count = 0;
 }
