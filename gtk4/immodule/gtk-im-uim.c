@@ -23,8 +23,6 @@ G_DEFINE_DYNAMIC_TYPE(UIMIMContext, uim_im_context, GTK_TYPE_IM_CONTEXT)
 static void uim_im_context_dispose(GObject *object);
 static void uim_im_context_finalize(GObject *object);
 
-// static void uim_im_context_reset(GtkIMContext *context);
-// static void uim_im_context_use_preedit(GtkIMContext *context, gboolean use_preedit);
 static gboolean uim_im_context_filter_keypress(GtkIMContext *context, GdkEvent *event);
 static void uim_im_context_get_preedit_string(
   GtkIMContext *context, gchar **str, PangoAttrList **attrs, gint *cursor_pos);
@@ -77,8 +75,6 @@ static void uim_im_context_class_finalize(UIMIMContextClass *class)
 static void
 uim_im_context_init(UIMIMContext *uic)
 {
-  g_print("uim_im_context_init\n");
-
   uic->widget = NULL;
 
   uic->slave = gtk_im_context_simple_new();
@@ -91,7 +87,6 @@ uim_im_context_init(UIMIMContext *uic)
   preedit_init(&uic->preedit);
 
   const char *im_name = uim_get_default_im_name(setlocale(LC_CTYPE, NULL));
-  g_print("im_name: %s\n", im_name);
   uic->uim_context = uim_create_context(
     uic,
     "UTF-8",
@@ -123,27 +118,20 @@ _uim_im_slave_im_context_commit_callback(
   const gchar *str,
   UIMIMContext *uic)
 {
-  g_print("_uim_im_slave_im_context_commit_callback\n");
-
   g_return_if_fail(str);
-  g_print("str: %s\n", str);
   g_signal_emit_by_name(uic, "commit", str);
 }
 
 static void
 _uim_im_uim_commit_callback(void *ptr, const char *str)
 {
-  g_print("_uim_im_uim_commit_callback\n");
-
   UIMIMContext *uic = (UIMIMContext *)ptr;
-  g_print("str: %s\n", str);
   g_return_if_fail(str);
   g_signal_emit_by_name(uic, "commit", str);
 }
 
 static void
 _uim_im_uim_candidate_selector_activate_callback(void *ptr, int nr, int display_limit) {
-  g_print("_uim_im_uim_candidate_selector_activate_callback: %d (%d)\n", nr, display_limit);
   UIMIMContext *uic = (UIMIMContext *)ptr;
 
   candidates_panel_activate(
@@ -156,7 +144,6 @@ _uim_im_uim_candidate_selector_activate_callback(void *ptr, int nr, int display_
 
 static void
 _uim_im_uim_candidate_selector_select_callback(void *ptr, int index) {
-  g_print("_uim_im_uim_candidate_selector_select_callback: %d\n", index);
   UIMIMContext *uic = (UIMIMContext *)ptr;
 
   candidates_panel_select_candidate(&uic->candidates_panel, uic->uim_context, index);
@@ -164,7 +151,6 @@ _uim_im_uim_candidate_selector_select_callback(void *ptr, int index) {
 
 static void
 _uim_im_uim_candidate_selector_shift_page_callback(void *ptr, int direction) {
-  g_print("_uim_im_uim_candidate_selector_shift_page_callback: %d\n", direction);
   UIMIMContext *uic = (UIMIMContext *)ptr;
 
   candidates_panel_shift_page(&uic->candidates_panel, uic->uim_context, direction);
@@ -172,7 +158,6 @@ _uim_im_uim_candidate_selector_shift_page_callback(void *ptr, int direction) {
 
 static void
 _uim_im_uim_candidate_selector_deactivate_callback(void *ptr) {
-  g_print("_uim_im_uim_candidate_selector_deactivate_callback\n");
   UIMIMContext *uic = (UIMIMContext *)ptr;
 
   candidates_panel_deactivate(&uic->candidates_panel);
@@ -180,16 +165,12 @@ _uim_im_uim_candidate_selector_deactivate_callback(void *ptr) {
 
 static void
 _uim_im_uim_preedit_clear_callback(void *ptr) {
-  g_print("_uim_im_uim_preedit_clear_callback\n");
-
   UIMIMContext *uic = (UIMIMContext *)ptr;
   preedit_clear(&uic->preedit);
 }
 
 static void
 _uim_im_uim_preedit_pushback_callback(void *ptr, int attr, const char *str) {
-  g_print("_uim_im_uim_preedit_pushback_callback: %i, %s\n", attr, str);
-
   UIMIMContext *uic = (UIMIMContext *)ptr;
   g_return_if_fail(str);
 
@@ -200,8 +181,6 @@ _uim_im_uim_preedit_pushback_callback(void *ptr, int attr, const char *str) {
 
 static void
 _uim_im_uim_preedit_update_callback(void *ptr) {
-  g_print("_uim_im_uim_preedit_update_callback\n");
-
   UIMIMContext *uic = (UIMIMContext *)ptr;
   g_return_if_fail(uic);
 
@@ -222,8 +201,6 @@ _uim_im_uim_preedit_update_callback(void *ptr) {
 static void
 _uim_im_ensure_uim_helper_connection(uim_context uim_context)
 {
-  g_print("_uim_im_ensure_uim_helper_connection\n");
-
   if (_uim_im_uim_fd < 0) {
     _uim_im_uim_fd = uim_helper_init_client_fd(_uim_im_uim_helper_disconnect_cb);
     if (_uim_im_uim_fd >= 0) {
@@ -241,8 +218,6 @@ _uim_im_ensure_uim_helper_connection(uim_context uim_context)
 
 static void _uim_im_uim_helper_disconnect_cb(void)
 {
-  g_print("_uim_im_uim_helper_disconnect_cb\n");
-
   g_source_remove(_uim_im_uim_read_tag);
   _uim_im_uim_read_tag = 0;
   _uim_im_uim_fd = -1;
@@ -253,20 +228,15 @@ static gboolean _uim_im_uim_helper_read_cb(
   GIOCondition condition,
   gpointer uim_context)
 {
-  g_print("_uim_im_uim_helper_read_cb\n");
-
   if (condition & G_IO_IN) {
     int fd = g_io_channel_unix_get_fd(channel);
     uim_helper_read_proc(fd);
     char *msg;
     while ((msg = uim_helper_get_message())) {
-      g_print("msg: %s\n", msg);
-
       if (g_str_has_prefix(msg, "im_change_whole_desktop") == TRUE) {
         gchar **lines = g_strsplit(msg, "\n", -1);
         gchar *im_name = lines[1];
 
-        g_print("Switching to IM: %s\n", im_name);
         uim_switch_im(uim_context, im_name);
         uim_prop_update_custom(
           uim_context,
@@ -285,8 +255,6 @@ static gboolean _uim_im_uim_helper_read_cb(
 static void
 uim_im_context_dispose(GObject *object)
 {
-  g_print("uim_im_context_dispose\n");
-
   UIMIMContext *uic = UIM_IM_CONTEXT(object);
 
   if (uic->slave) {
@@ -307,15 +275,12 @@ uim_im_context_dispose(GObject *object)
 static void
 uim_im_context_finalize(GObject *object)
 {
-  g_print("uim_im_context_finalize\n");
   G_OBJECT_CLASS(uim_im_context_parent_class)->finalize(object);
 }
 
 static gboolean
 uim_im_context_filter_keypress(GtkIMContext *context, GdkEvent *event)
 {
-  g_print("uim_im_context_filter_keypress\n");
-
   UIMIMContext *uic = UIM_IM_CONTEXT(context);
   int keycode, keystate;
   keyutil_convert_gdk_event_to_uim_key(event, &keycode, &keystate);
@@ -353,10 +318,6 @@ static void uim_im_context_get_preedit_string(
 static void
 uim_im_context_set_client_widget(GtkIMContext *context, GtkWidget *widget)
 {
-  g_print(
-    "uim_im_context_set_client_widget: %s\n",
-    gtk_widget_get_name(widget));
-
   UIMIMContext *uic = UIM_IM_CONTEXT(context);
   gtk_im_context_set_client_widget(uic->slave, widget);
   uic->widget = widget;
@@ -365,16 +326,12 @@ uim_im_context_set_client_widget(GtkIMContext *context, GtkWidget *widget)
 
 static void
 uim_im_context_focus_in(GtkIMContext *context) {
-  g_print("uim_im_context_focus_in\n");
-
   UIMIMContext *uic = UIM_IM_CONTEXT(context);
   uim_focus_in_context(uic->uim_context);
 }
 
 static void
 uim_im_context_focus_out(GtkIMContext *context) {
-  g_print("uim_im_context_focus_out\n");
-
   UIMIMContext *uic = UIM_IM_CONTEXT(context);
   uim_focus_out_context(uic->uim_context);
 }
@@ -401,8 +358,6 @@ g_io_module_load(GIOModule *module)
 void
 g_io_module_unload(GIOModule *module)
 {
-  g_print("g_io_module_unload\n");
-
   if (_uim_im_uim_read_tag != 0) {
     g_source_remove(_uim_im_uim_read_tag);
     _uim_im_uim_read_tag = 0;
