@@ -19,6 +19,7 @@ typedef struct _UIMIMContext {
 
   preedit preedit;
   candidates_panel candidates_panel;
+  unsigned int g_io_channel_read_tag;
 } UIMIMContext;
 
 GType uim_im_context_get_type(void);

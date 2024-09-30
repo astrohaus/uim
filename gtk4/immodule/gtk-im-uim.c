@@ -44,8 +44,7 @@ static void _uim_im_uim_preedit_pushback_callback(void *ptr, int attr, const cha
 static void _uim_im_uim_preedit_update_callback(void *ptr);
 
 static int _uim_im_uim_fd = -1;
-static unsigned int _uim_im_uim_read_tag = 0;
-static void _uim_im_ensure_uim_helper_connection(uim_context uc);
+static void _uim_im_ensure_uim_helper_connection(UIMIMContext *uic);
 static void _uim_im_uim_helper_disconnect_cb(void);
 static gboolean _uim_im_uim_helper_read_cb(
   GIOChannel *channel,
@@ -108,7 +107,7 @@ uim_im_context_init(UIMIMContext *uic)
     _uim_im_uim_preedit_pushback_callback,
     _uim_im_uim_preedit_update_callback);
 
-  _uim_im_ensure_uim_helper_connection(uic->uim_context);
+  _uim_im_ensure_uim_helper_connection(uic);
   keyutil_init_modifier_keys();
 }
 
@@ -199,27 +198,25 @@ _uim_im_uim_preedit_update_callback(void *ptr) {
 }
 
 static void
-_uim_im_ensure_uim_helper_connection(uim_context uim_context)
+_uim_im_ensure_uim_helper_connection(UIMIMContext *uic)
 {
   if (_uim_im_uim_fd < 0) {
     _uim_im_uim_fd = uim_helper_init_client_fd(_uim_im_uim_helper_disconnect_cb);
-    if (_uim_im_uim_fd >= 0) {
-      uim_set_uim_fd(uim_context, _uim_im_uim_fd);
-      GIOChannel *channel = g_io_channel_unix_new(_uim_im_uim_fd);
-      _uim_im_uim_read_tag = g_io_add_watch(
-        channel,
-        G_IO_IN | G_IO_HUP | G_IO_ERR,
-        _uim_im_uim_helper_read_cb,
-        uim_context);
-      g_io_channel_unref(channel);
-    }
+  }
+  if (_uim_im_uim_fd >= 0) {
+    uim_set_uim_fd(uic->uim_context, _uim_im_uim_fd);
+    GIOChannel *channel = g_io_channel_unix_new(_uim_im_uim_fd);
+    uic->g_io_channel_read_tag = g_io_add_watch(
+      channel,
+      G_IO_IN | G_IO_HUP | G_IO_ERR,
+      _uim_im_uim_helper_read_cb,
+      uic->uim_context);
+    g_io_channel_unref(channel);
   }
 }
 
 static void _uim_im_uim_helper_disconnect_cb(void)
 {
-  g_source_remove(_uim_im_uim_read_tag);
-  _uim_im_uim_read_tag = 0;
   _uim_im_uim_fd = -1;
 }
 
@@ -265,6 +262,7 @@ uim_im_context_dispose(GObject *object)
     g_object_unref(uic->slave);
     uic->slave = NULL;
   }
+  g_source_remove(uic->g_io_channel_read_tag);
   if (uic->uim_context) {
     uim_release_context(uic->uim_context);
     uic->uim_context = NULL;
@@ -358,10 +356,6 @@ g_io_module_load(GIOModule *module)
 void
 g_io_module_unload(GIOModule *module)
 {
-  if (_uim_im_uim_read_tag != 0) {
-    g_source_remove(_uim_im_uim_read_tag);
-    _uim_im_uim_read_tag = 0;
-  }
   if (_uim_im_uim_fd != -1) {
     uim_helper_close_client_fd(_uim_im_uim_fd);
     _uim_im_uim_fd = -1;
