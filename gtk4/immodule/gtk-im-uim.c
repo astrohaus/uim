@@ -51,6 +51,7 @@ static gboolean _uim_im_uim_helper_read_cb(
   GIOCondition condition,
   gpointer data);
 
+static UIMIMContext *focused_context = NULL;
 
 static void
 uim_im_context_class_init(UIMIMContextClass *class)
@@ -223,24 +224,29 @@ static void _uim_im_uim_helper_disconnect_cb(void)
 static gboolean _uim_im_uim_helper_read_cb(
   GIOChannel *channel,
   GIOCondition condition,
-  gpointer uim_context)
+  gpointer _null)
 {
   if (condition & G_IO_IN) {
     int fd = g_io_channel_unix_get_fd(channel);
     uim_helper_read_proc(fd);
     char *msg;
     while ((msg = uim_helper_get_message())) {
-      if (g_str_has_prefix(msg, "im_change_whole_desktop") == TRUE) {
+      
+      if (g_str_has_prefix(msg, "im_change_this_text_area_only") == TRUE) {
         gchar **lines = g_strsplit(msg, "\n", -1);
         gchar *im_name = lines[1];
 
-        uim_switch_im(uim_context, im_name);
-        uim_prop_update_custom(
-          uim_context,
-          "custom-preserved-default-im-name",
-          im_name
-        );
-        uim_prop_list_update(uim_context);
+        if (focused_context) {
+          uim_switch_im(focused_context->uim_context, im_name);
+          uim_prop_update_custom(
+            focused_context->uim_context,
+            "custom-preserved-default-im-name",
+            im_name
+          );
+          uim_prop_list_update(focused_context->uim_context);
+        } else {
+          g_warn("Received command to switch to IM: %s, but no focused context\n", im_name);
+        }
       }
 
       free(msg);
@@ -325,11 +331,14 @@ uim_im_context_set_client_widget(GtkIMContext *context, GtkWidget *widget)
 static void
 uim_im_context_focus_in(GtkIMContext *context) {
   UIMIMContext *uic = UIM_IM_CONTEXT(context);
+  focused_context = uic;
   uim_focus_in_context(uic->uim_context);
 }
 
 static void
 uim_im_context_focus_out(GtkIMContext *context) {
+  focused_context = NULL;
+
   UIMIMContext *uic = UIM_IM_CONTEXT(context);
   uim_focus_out_context(uic->uim_context);
 }
