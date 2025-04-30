@@ -44,6 +44,8 @@ static void _uim_im_uim_preedit_pushback_callback(void *ptr, int attr, const cha
 static void _uim_im_uim_preedit_update_callback(void *ptr);
 
 static int _uim_im_uim_fd = -1;
+static unsigned int read_tag;
+
 static void _uim_im_ensure_uim_helper_connection(UIMIMContext *uic);
 static void _uim_im_uim_helper_disconnect_cb(void);
 static gboolean _uim_im_uim_helper_read_cb(
@@ -203,22 +205,25 @@ _uim_im_ensure_uim_helper_connection(UIMIMContext *uic)
 {
   if (_uim_im_uim_fd < 0) {
     _uim_im_uim_fd = uim_helper_init_client_fd(_uim_im_uim_helper_disconnect_cb);
-  }
-  if (_uim_im_uim_fd >= 0) {
-    uim_set_uim_fd(uic->uim_context, _uim_im_uim_fd);
-    GIOChannel *channel = g_io_channel_unix_new(_uim_im_uim_fd);
-    uic->g_io_channel_read_tag = g_io_add_watch(
-      channel,
-      G_IO_IN | G_IO_HUP | G_IO_ERR,
-      _uim_im_uim_helper_read_cb,
-      uic->uim_context);
-    g_io_channel_unref(channel);
+    if (_uim_im_uim_fd >= 0) {
+      uim_set_uim_fd(uic->uim_context, _uim_im_uim_fd);
+      GIOChannel *channel = g_io_channel_unix_new(_uim_im_uim_fd);
+      read_tag = g_io_add_watch(
+        channel,
+        G_IO_IN | G_IO_HUP | G_IO_ERR,
+        _uim_im_uim_helper_read_cb,
+        NULL);
+      g_io_channel_unref(channel);
+    }
+  } else {
+      uim_set_uim_fd(uic->uim_context, _uim_im_uim_fd);
   }
 }
 
 static void _uim_im_uim_helper_disconnect_cb(void)
 {
   _uim_im_uim_fd = -1;
+  g_source_remove(read_tag);
 }
 
 static gboolean _uim_im_uim_helper_read_cb(
@@ -245,7 +250,7 @@ static gboolean _uim_im_uim_helper_read_cb(
           );
           uim_prop_list_update(focused_context->uim_context);
         } else {
-          g_warn("Received command to switch to IM: %s, but no focused context\n", im_name);
+          g_warning("Received command to switch to IM: %s, but no focused context\n", im_name);
         }
       }
 
@@ -268,7 +273,6 @@ uim_im_context_dispose(GObject *object)
     g_object_unref(uic->slave);
     uic->slave = NULL;
   }
-  g_source_remove(uic->g_io_channel_read_tag);
   if (uic->uim_context) {
     uim_release_context(uic->uim_context);
     uic->uim_context = NULL;
@@ -332,6 +336,8 @@ static void
 uim_im_context_focus_in(GtkIMContext *context) {
   UIMIMContext *uic = UIM_IM_CONTEXT(context);
   focused_context = uic;
+  _uim_im_ensure_uim_helper_connection(uic);
+  
   uim_focus_in_context(uic->uim_context);
 }
 
