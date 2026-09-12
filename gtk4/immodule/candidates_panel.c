@@ -123,16 +123,23 @@ static void _show_current_page(candidates_panel *panel, uim_context uim_context)
     uim_candidate_free(candidate);
   }
 
+  /* g_strv_builder_end() transfers the vector to us; unreffing the builder
+   * does not free it. The emission collects boxed params without copying
+   * (G_VALUE_NOCOPY_CONTENTS), so handlers must copy what they keep and we
+   * free the vector once the synchronous emission returns. */
+  GStrv labels = g_strv_builder_end(candidate_labels);
+  g_strv_builder_unref(candidate_labels);
+
   g_signal_emit(
     panel->client,
     panel->signal_candidate_selector_show,
     0,
     end_index - start_index,
-    g_strv_builder_end(candidate_labels),
+    labels,
     panel->current_page > 0,
     panel->current_page < (panel->candiadates_count - 1) / panel->candidates_per_page);
 
-  g_strv_builder_unref(candidate_labels);
+  g_strfreev(labels);
 }
 
 static bool

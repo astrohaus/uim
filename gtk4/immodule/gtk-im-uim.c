@@ -239,9 +239,13 @@ static gboolean _uim_im_uim_helper_read_cb(
       
       if (g_str_has_prefix(msg, "im_change_this_text_area_only") == TRUE) {
         gchar **lines = g_strsplit(msg, "\n", -1);
+        /* lines[0] is the command itself (the prefix matched, so msg is
+         * non-empty); lines[1] is NULL when no IM name followed. */
         gchar *im_name = lines[1];
 
-        if (focused_context) {
+        if (im_name == NULL) {
+          g_warning("Received command to switch IM without an IM name\n");
+        } else if (focused_context) {
           uim_switch_im(focused_context->uim_context, im_name);
           uim_prop_update_custom(
             focused_context->uim_context,
@@ -252,6 +256,8 @@ static gboolean _uim_im_uim_helper_read_cb(
         } else {
           g_warning("Received command to switch to IM: %s, but no focused context\n", im_name);
         }
+
+        g_strfreev(lines);
       }
 
       free(msg);
