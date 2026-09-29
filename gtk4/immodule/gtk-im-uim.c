@@ -29,6 +29,7 @@ static void uim_im_context_get_preedit_string(
 static void uim_im_context_set_client_widget(GtkIMContext *context, GtkWidget *widget);
 static void uim_im_context_focus_in(GtkIMContext *context);
 static void uim_im_context_focus_out(GtkIMContext *context);
+static void uim_im_context_reset(GtkIMContext *context);
 
 static void _uim_im_slave_im_context_commit_callback(
   GtkIMContext *slave,
@@ -64,6 +65,7 @@ uim_im_context_class_init(UIMIMContextClass *class)
   im_context_class->get_preedit_string = uim_im_context_get_preedit_string;
   im_context_class->focus_in = uim_im_context_focus_in;
   im_context_class->focus_out = uim_im_context_focus_out;
+  im_context_class->reset = uim_im_context_reset;
 
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
   gobject_class->dispose = uim_im_context_dispose;
@@ -353,6 +355,25 @@ uim_im_context_focus_out(GtkIMContext *context) {
 
   UIMIMContext *uic = UIM_IM_CONTEXT(context);
   uim_focus_out_context(uic->uim_context);
+}
+
+/* Drop what is composed, as GTK asks when the text moves under it (another
+ * draft shown, the caret moved): uim's reset handler flushes the input
+ * method's composition and keeps the input method and its on/off mode. The
+ * candidates go with it, and a preedit the handler left is cleared, so the
+ * text view shows none and nothing composed can commit later. */
+static void
+uim_im_context_reset(GtkIMContext *context)
+{
+  UIMIMContext *uic = UIM_IM_CONTEXT(context);
+
+  uim_reset_context(uic->uim_context);
+  candidates_panel_deactivate(&uic->candidates_panel);
+  if (preedit_strlen(&uic->preedit) > 0) {
+    preedit_clear(&uic->preedit);
+    _uim_im_uim_preedit_update_callback(uic);
+  }
+  gtk_im_context_reset(uic->slave);
 }
 
 
